@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bond & T-Bill Calculator - Portfolio Manager Tools</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        /* ===== GLOBAL STYLES ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            color: #1e3c72;
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* ===== MAIN LAYOUT ===== */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ===== CARD STYLES ===== */
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e3c72;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        /* ===== FORM STYLES ===== */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #555;
+            margin-bottom: 5px;
+        }
+
+        input, select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #2a5298;
+        }
+
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        /* ===== BUTTON STYLES ===== */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(30, 60, 114, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        /* ===== RESULTS STYLES ===== */
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .result-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #2a5298;
+        }
+
+        .result-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .result-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1e3c72;
+        }
+
+        .result-unit {
+            font-size: 14px;
+            color: #666;
+            margin-left: 4px;
+        }
+
+        /* ===== TABLE STYLES ===== */
+        .table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th {
+            background: #1e3c72;
+            color: white;
+            padding: 12px 8px;
+            text-align: right;
+            font-weight: 600;
+        }
+
+        th:first-child {
+            text-align: center;
+        }
+
+        td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #e0e0e0;
+            text-align: right;
+        }
+
+        td:first-child {
+            text-align: center;
+            font-weight: 600;
+        }
+
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        /* ===== CHART STYLES ===== */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 20px;
+        }
+
+        /* ===== TAB STYLES ===== */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 6px 6px 0 0;
+            cursor: pointer;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: white;
+            color: #1e3c72;
+            border-bottom: 3px solid #2a5298;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* ===== SCENARIO ANALYSIS ===== */
+        .scenario-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .scenario-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .scenario-card.bear {
+            border-left: 4px solid #dc3545;
+        }
+
+        .scenario-card.base {
+            border-left: 4px solid #28a745;
+        }
+
+        .scenario-card.bull {
+            border-left: 4px solid #007bff;
+        }
+
+        .scenario-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .scenario-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1e3c72;
+        }
+
+        /* ===== UTILITY CLASSES ===== */
+        .hidden {
+            display: none !important;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .mt-20 {
+            margin-top: 20px;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>📊 Professional Bond & T-Bill Calculator</h1>
+            <p>Comprehensive fixed-income analytics for portfolio managers</p>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Left Column: Inputs -->
+            <div>
+                <div class="card">
+                    <h2 class="card-title">Bond Parameters</h2>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Instrument Type</label>
+                            <select id="instrumentType">
+                                <option value="treasury">US Treasury</option>
+                                <option value="corporate">Corporate Bond</option>
+                                <option value="municipal">Municipal Bond</option>
+                                <option value="tbill">Treasury Bill</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Currency</label>
+                            <select id="currency">
+                                <option value="USD">USD</option>
+                                <option value="EUR">EUR</option>
+                                <option value="GBP">GBP</option>
+                                <option value="JPY">JPY</option>
+                                <option value="LKR">LKR</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Face Value</label>
+                            <input type="number" id="faceValue" value="1000" step="100">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Coupon Rate (%)</label>
+                            <input type="number" id="couponRate" value="5" step="0.125">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Coupon Frequency</label>
+                            <select id="couponFrequency">
+                                <option value="1">Annual</option>
+                                <option value="2" selected>Semi-Annual</option>
+                                <option value="4">Quarterly</option>
+                                <option value="12">Monthly</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Day Count Convention</label>
+                            <select id="dayCount">
+                                <option value="30/360">30/360</option>
+                                <option value="actual/360">Actual/360</option>
+                                <option value="actual/actual" selected>Actual/Actual</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Settlement Date</label>
+                            <input type="date" id="settlementDate" value="2025-10-03">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Maturity Date</label>
+                            <input type="date" id="maturityDate" value="2035-10-03">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Market Price</label>
+                            <input type="number" id="marketPrice" value="100" step="0.01">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Yield to Maturity (%)</label>
+                            <input type="number" id="ytm" value="5" step="0.01" placeholder="Optional">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Tax Rate (%) - Optional</label>
+                            <input type="number" id="taxRate" value="0" step="0.1" min="0" max="100">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Call Price - Optional</label>
+                            <input type="number" id="callPrice" step="0.01" placeholder="Leave empty if N/A">
+                        </div>
+                    </div>
+
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="calculate()">Calculate</button>
+                        <button class="btn btn-secondary" onclick="reset()">Reset</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Results -->
+            <div>
+                <div class="card">
+                    <h2 class="card-title">Key Metrics</h2>
+                    
+                    <div id="resultsContainer" class="hidden">
+                        <div class="results-grid">
+                            <div class="result-item">
+                                <div class="result-label">Clean Price</div>
+                                <div class="result-value" id="cleanPrice">-</div>
+                            </div>
+                            <div class="result-item">
+                                <div class="result-label">Dirty Price</div>
+                                <div class="result-value" id="dirtyPrice">-</div>
+                            </div>
+                            <div class="result-item">
+                                <div class="result-label">Accrued Interest</div>
+                                <div class="result-value" id="accruedInterest">-</div>
+                            </div>
+                            <div class="result-item">
+                                <div class="result-label">Yield to Maturity</div>
+                                <div class="result-value" id="ytmResult">-<span class="result-unit">%</span></div>
+                            </div>
+                            <div class="result-item">
+                                <div class="result-label">Current Yield</div>
+                                <div class="result-value" id="currentYield">-<span class="result-unit">%</span></div>
+                            </div>
+                            <div class="result-item">
+                                <div class="result-label">Macaulay Duration</div>
+                                <div class="result-value" id="macaulayDuration">-<span class="result-unit">yrs</span></div>
+                            </div>
+                            <div class="result-item">
+                                <div class="result-label">Modified Duration</div>
+                                <div class="result-value" id="modifiedDuration">-<span class="result-unit">yrs</span></div>
+                            </div>
+                            <div class="result-item">
+                                <div class="result-label">Convexity</div>
+                                <div class="result-value" id="convexity">-</div>
+                            </div>
+                            <div class="result-item">
+                                <div class="result-label">DV01 / PV01</div>
+                                <div class="result-value" id="dv01">-</div>
+                            </div>
+                            <div class="result-item">
+                                <div class="result-label">After-Tax Yield</div>
+                                <div class="result-value" id="afterTaxYield">-<span class="result-unit">%</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="placeholder" class="alert alert-info text-center">
+                        Enter bond parameters and click "Calculate" to see results
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs Section -->
+        <div class="card mt-20" id="analysisSection" style="display: none;">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('cashflow')">Cash Flow Schedule</button>
+                <button class="tab" onclick="switchTab('charts')">Analytics Charts</button>
+                <button class="tab" onclick="switchTab('scenario')">Scenario Analysis</button>
+            </div>
+
+            <!-- Cash Flow Tab -->
+            <div id="cashflow" class="tab-content active">
+                <div class="btn-group">
+                    <button class="btn btn-secondary" onclick="exportToCSV()">📥 Export to CSV</button>
+                </div>
+                <div class="table-container">
+                    <table id="cashflowTable">
+                        <thead>
+                            <tr>
+                                <th>Period</th>
+                                <th>Date</th>
+                                <th>Coupon</th>
+                                <th>Principal</th>
+                                <th>Total CF</th>
+                                <th>Discount Factor</th>
+                                <th>PV</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cashflowBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Charts Tab -->
+            <div id="charts" class="tab-content">
+                <div class="chart-container">
+                    <canvas id="yieldPriceChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <canvas id="durationChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Scenario Analysis Tab -->
+            <div id="scenario" class="tab-content">
+                <div class="alert alert-info">
+                    Interest Rate Shock Scenario Analysis (±100 bps and ±200 bps)
+                </div>
+                <div class="scenario-grid">
+                    <div class="scenario-card bear">
+                        <div class="scenario-title">🔴 Bear (+200 bps)</div>
+                        <div class="scenario-value" id="bearPrice">-</div>
+                        <div class="result-unit">Change: <span id="bearChange">-</span>%</div>
+                    </div>
+                    <div class="scenario-card base">
+                        <div class="scenario-title">🟢 Base Case</div>
+                        <div class="scenario-value" id="basePrice">-</div>
+                        <div class="result-unit">Current Price</div>
+                    </div>
+                    <div class="scenario-card bull">
+                        <div class="scenario-title">🔵 Bull (-200 bps)</div>
+                        <div class="scenario-value" id="bullPrice">-</div>
+                        <div class="result-unit">Change: <span id="bullChange">-</span>%</div>
+                    </div>
+                </div>
+                <div class="scenario-grid mt-20">
+                    <div class="scenario-card bear">
+                        <div class="scenario-title">Bear (+100 bps)</div>
+                        <div class="scenario-value" id="bear100Price">-</div>
+                        <div class="result-unit">Change: <span id="bear100Change">-</span>%</div>
+                    </div>
+                    <div class="scenario-card base" style="visibility: hidden;">
+                    </div>
+                    <div class="scenario-card bull">
+                        <div class="scenario-title">Bull (-100 bps)</div>
+                        <div class="scenario-value" id="bull100Price">-</div>
+                        <div class="result-unit">Change: <span id="bull100Change">-</span>%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== GLOBAL VARIABLES =====
+        let cashFlowData = [];
+        let yieldPriceChart = null;
+        let durationChart = null;
+
+        // ===== MAIN CALCULATION FUNCTION =====
+        function calculate() {
+            try {
+                // Get input values
+                const faceValue = parseFloat(document.getElementById('faceValue').value);
+                const couponRate = parseFloat(document.getElementById('couponRate').value) / 100;
+                const frequency = parseInt(document.getElementById('couponFrequency').value);
+                const marketPrice = parseFloat(document.getElementById('marketPrice').value);
+                const taxRate = parseFloat(document.getElementById('taxRate').value) / 100;
+                const currency = document.getElementById('currency').value;
+                
+                const settlementDate = new Date(document.getElementById('settlementDate').value);
+                const maturityDate = new Date(document.getElementById('maturityDate').value);
+                
+                // Calculate years to maturity
+                const yearsToMaturity = (maturityDate - settlementDate) / (365.25 * 24 * 60 * 60 * 1000);
+                
+                // Calculate coupon payment
+                const couponPayment = (faceValue * couponRate) / frequency;
+                
+                // Calculate accrued interest
+                const accruedInterest = calculateAccruedInterest(settlementDate, maturityDate, couponRate, faceValue, frequency);
+                
+                // Calculate YTM using Newton-Raphson method
+                let ytm = parseFloat(document.getElementById('ytm').value);
+                if (!ytm || ytm === 0) {
+                    ytm = calculateYTM(marketPrice, faceValue, couponPayment, yearsToMaturity, frequency);
+                }
+                
+                // Calculate price from YTM
+                const calculatedPrice = calculatePrice(faceValue, couponPayment, ytm / 100, yearsToMaturity, frequency);
+                
+                // Calculate current yield
+                const currentYield = (faceValue * couponRate / marketPrice) * 100;
+                
+                // Calculate duration and convexity
+                const { macaulay, modified } = calculateDuration(faceValue, couponPayment, ytm / 100, yearsToMaturity, frequency, marketPrice);
+                const convexity = calculateConvexity(faceValue, couponPayment, ytm / 100, yearsToMaturity, frequency, marketPrice);
+                
+                // Calculate DV01 (dollar value of 1 basis point)
+                const dv01 = (modified * marketPrice * faceValue / 100) / 10000;
+                
+                // After-tax yield
+                const afterTaxYield = ytm * (1 - taxRate);
+                
+                // Generate cash flows
+                cashFlowData = generateCashFlows(faceValue, couponPayment, settlementDate, maturityDate, frequency, ytm / 100);
+                
+                // Display results
+                displayResults({
+                    cleanPrice: marketPrice,
+                    dirtyPrice: marketPrice + (accruedInterest / faceValue * 100),
+                    accruedInterest: accruedInterest,
+                    ytm: ytm,
+                    currentYield: currentYield,
+                    macaulayDuration: macaulay,
+                    modifiedDuration: modified,
+                    convexity: convexity,
+                    dv01: dv01,
+                    afterTaxYield: afterTaxYield,
+                    currency: currency
+                });
+                
+                // Display cash flow table
+                displayCashFlowTable(cashFlowData, currency);
+                
+                // Generate charts
+                generateCharts(faceValue, couponPayment, yearsToMaturity, frequency, ytm / 100, marketPrice, currency);
+                
+                // Calculate scenario analysis
+                calculateScenarios(faceValue, couponPayment, yearsToMaturity, frequency, ytm / 100, marketPrice, currency);
+                
+                // Show results and analysis sections
+                document.getElementById('resultsContainer').classList.remove('hidden');
+                document.getElementById('placeholder').classList.add('hidden');
+                document.getElementById('analysisSection').style.display = 'block';
+                
+            } catch (error) {
+                alert('Error in calculation: ' + error.message);
+                console.error(error);
+            }
+        }
+
+        // ===== CALCULATE ACCRUED INTEREST =====
+        function calculateAccruedInterest(settlementDate, lastCouponDate, couponRate, faceValue, frequency) {
+            // Simplified: assume settlement is right after coupon payment
+            // In production, you'd need to find the actual last coupon date
+            const daysSinceLastCoupon = 0; // Placeholder
+            const daysInPeriod = 365.25 / frequency;
+            return (faceValue * couponRate / frequency) * (daysSinceLastCoupon / daysInPeriod);
+        }
+
+        // ===== CALCULATE YTM USING NEWTON-RAPHSON METHOD =====
+        function calculateYTM(price, faceValue, couponPayment, years, frequency) {
+            // Initial guess
+            let ytm = 0.05; // 5%
+            const tolerance = 0.0001;
+            const maxIterations = 100;
+            
+            for (let i = 0; i < maxIterations; i++) {
+                const calculatedPrice = calculatePrice(faceValue, couponPayment, ytm, years, frequency);
+                const priceError = calculatedPrice - price;
+                
+                if (Math.abs(priceError) < tolerance) {
+                    return ytm * 100;
+                }
+                
+                // Calculate derivative (modified duration approximation)
+                const epsilon = 0.0001;
+                const priceUp = calculatePrice(faceValue, couponPayment, ytm + epsilon, years, frequency);
+                const derivative = (priceUp - calculatedPrice) / epsilon;
+                
+                // Newton-Raphson update
+                ytm = ytm - priceError / derivative;
+                
+                // Prevent negative yields
+                if (ytm < 0) ytm = 0.001;
+            }
+            
+            return ytm * 100;
+        }
+
+        // ===== CALCULATE BOND PRICE FROM YTM =====
+        function calculatePrice(faceValue, couponPayment, ytm, years, frequency) {
+            const periods = years * frequency;
+            const yieldPerPeriod = ytm / frequency;
+            
+            let price = 0;
+            
+            // Present value of coupon payments
+            for (let t = 1; t <= periods; t++) {
+                price += couponPayment / Math.pow(1 + yieldPerPeriod, t);
+            }
+            
+            // Present value of face value
+            price += faceValue / Math.pow(1 + yieldPerPeriod, periods);
+            
+            return price;
+        }
+
+        // ===== CALCULATE DURATION =====
+        function calculateDuration(faceValue, couponPayment, ytm, years, frequency, price) {
+            const periods = years * frequency;
+            const yieldPerPeriod = ytm / frequency;
+            
+            let weightedCashFlow = 0;
+            let totalPV = 0;
+            
+            // Weighted present value of cash flows
+            for (let t = 1; t <= periods; t++) {
+                const pv = couponPayment / Math.pow(1 + yieldPerPeriod, t);
+                weightedCashFlow += (t / frequency) * pv;
+                totalPV += pv;
+            }
+            
+            // Add principal
+            const principalPV = faceValue / Math.pow(1 + yieldPerPeriod, periods);
+            weightedCashFlow += years * principalPV;
+            totalPV += principalPV;
+            
+            const macaulay = weightedCashFlow / totalPV;
+            const modified = macaulay / (1 + ytm / frequency);
+            
+            return { macaulay, modified };
+        }
+
+        // ===== CALCULATE CONVEXITY =====
+        function calculateConvexity(faceValue, couponPayment, ytm, years, frequency, price) {
+            const epsilon = 0.0001; // 1 basis point
+            
+            const priceUp = calculatePrice(faceValue, couponPayment, ytm + epsilon, years, frequency);
+            const priceDown = calculatePrice(faceValue, couponPayment, ytm - epsilon, years, frequency);
+            const priceBase = calculatePrice(faceValue, couponPayment, ytm, years, frequency);
+            
+            const convexity = (priceUp + priceDown - 2 * priceBase) / (priceBase * epsilon * epsilon);
+            
+            return convexity;
+        }
+
+        // ===== GENERATE CASH FLOWS =====
+        function generateCashFlows(faceValue, couponPayment, settlementDate, maturityDate, frequency, ytm) {
+            const cashFlows = [];
+            const periods = Math.ceil((maturityDate - settlementDate) / (365.25 * 24 * 60 * 60 * 1000) * frequency);
+            const yieldPerPeriod = ytm / frequency;
+            
+            for (let t = 1; t <= periods; t++) {
+                const date = new Date(settlementDate);
+                date.setMonth(date.getMonth() + (12 / frequency) * t);
+                
+                const principal = (t === periods) ? faceValue : 0;
+                const totalCF = couponPayment + principal;
+                const discountFactor = 1 / Math.pow(1 + yieldPerPeriod, t);
+                const pv = totalCF * discountFactor;
+                
+                cashFlows.push({
+                    period: t,
+                    date: date.toISOString().split('T')[0],
+                    coupon: couponPayment,
+                    principal: principal,
+                    totalCF: totalCF,
+                    discountFactor: discountFactor,
+                    pv: pv
+                });
+            }
+            
+            return cashFlows;
+        }
+
+        // ===== DISPLAY RESULTS =====
+        function displayResults(results) {
+            document.getElementById('cleanPrice').textContent = results.currency + ' ' + results.cleanPrice.toFixed(2);
+            document.getElementById('dirtyPrice').textContent = results.currency + ' ' + results.dirtyPrice.toFixed(2);
+            document.getElementById('accruedInterest').textContent = results.currency + ' ' + results.accruedInterest.toFixed(2);
+            document.getElementById('ytmResult').innerHTML = results.ytm.toFixed(3) + '<span class="result-unit">%</span>';
+            document.getElementById('currentYield').innerHTML = results.currentYield.toFixed(3) + '<span class="result-unit">%</span>';
+            document.getElementById('macaulayDuration').innerHTML = results.macaulayDuration.toFixed(3) + '<span class="result-unit">yrs</span>';
+            document.getElementById('modifiedDuration').innerHTML = results.modifiedDuration.toFixed(3) + '<span class="result-unit">yrs</span>';
+            document.getElementById('convexity').textContent = results.convexity.toFixed(2);
+            document.getElementById('dv01').textContent = results.currency + ' ' + results.dv01.toFixed(2);
+            document.getElementById('afterTaxYield').innerHTML = results.afterTaxYield.toFixed(3) + '<span class="result-unit">%</span>';
+        }
+
+        // ===== DISPLAY CASH FLOW TABLE =====
+        function displayCashFlowTable(cashFlows, currency) {
+            const tbody = document.getElementById('cashflowBody');
+            tbody.innerHTML = '';
+            
+            cashFlows.forEach(cf => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${cf.period}</td>
+                    <td>${cf.date}</td>
+                    <td>${currency} ${cf.coupon.toFixed(2)}</td>
+                    <td>${currency} ${cf.principal.toFixed(2)}</td>
+                    <td>${currency} ${cf.totalCF.toFixed(2)}</td>
+                    <td>${cf.discountFactor.toFixed(6)}</td>
+                    <td>${currency} ${cf.pv.toFixed(2)}</td>
+                `;
+            });
+        }
+
+        // ===== GENERATE CHARTS =====
+        function generateCharts(faceValue, couponPayment, years, frequency, baseYtm, basePrice, currency) {
+            // Yield vs Price Chart
+            const yieldRange = [];
+            const priceRange = [];
+            
+            for (let y = baseYtm - 0.03; y <= baseYtm + 0.03; y += 0.005) {
+                yieldRange.push((y * 100).toFixed(2));
+                priceRange.push(calculatePrice(faceValue, couponPayment, y, years, frequency));
+            }
+            
+            const ctx1 = document.getElementById('yieldPriceChart');
+            if (yieldPriceChart) yieldPriceChart.destroy();
+            
+            yieldPriceChart = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: yieldRange,
+                    datasets: [{
+                        label: 'Bond Price',
+                        data: priceRange,
+                        borderColor: '#2a5298',
+                        backgroundColor: 'rgba(42, 82, 152, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Yield to Maturity vs Bond Price',
+                            font: { size: 16, weight: 'bold' }
+                        },
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Yield to Maturity (%)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Bond Price (' + currency + ')'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Duration Chart
+            const durationData = [];
+            const convexityData = [];
+            
+            for (let y = baseYtm - 0.03; y <= baseYtm + 0.03; y += 0.005) {
+                const price = calculatePrice(faceValue, couponPayment, y, years, frequency);
+                const duration = calculateDuration(faceValue, couponPayment, y, years, frequency, price);
+                durationData.push(duration.modified);
+            }
+            
+            const ctx2 = document.getElementById('durationChart');
+            if (durationChart) durationChart.destroy();
+            
+            durationChart = new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: yieldRange,
+                    datasets: [{
+                        label: 'Modified Duration',
+                        data: durationData,
+                        borderColor: '#28a745',
+                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Modified Duration vs Yield',
+                            font: { size: 16, weight: 'bold' }
+                        },
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Yield to Maturity (%)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Modified Duration (years)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ===== CALCULATE SCENARIO ANALYSIS =====
+        function calculateScenarios(faceValue, couponPayment, years, frequency, baseYtm, basePrice, currency) {
+            // Calculate prices for different yield scenarios
+            const bear200 = calculatePrice(faceValue, couponPayment, baseYtm + 0.02, years, frequency);
+            const bear100 = calculatePrice(faceValue, couponPayment, baseYtm + 0.01, years, frequency);
+            const bull100 = calculatePrice(faceValue, couponPayment, baseYtm - 0.01, years, frequency);
+            const bull200 = calculatePrice(faceValue, couponPayment, baseYtm - 0.02, years, frequency);
+            
+            const bear200Change = ((bear200 - basePrice) / basePrice * 100);
+            const bear100Change = ((bear100 - basePrice) / basePrice * 100);
+            const bull100Change = ((bull100 - basePrice) / basePrice * 100);
+            const bull200Change = ((bull200 - basePrice) / basePrice * 100);
+            
+            document.getElementById('bearPrice').textContent = currency + ' ' + bear200.toFixed(2);
+            document.getElementById('bearChange').textContent = bear200Change.toFixed(2);
+            
+            document.getElementById('basePrice').textContent = currency + ' ' + basePrice.toFixed(2);
+            
+            document.getElementById('bullPrice').textContent = currency + ' ' + bull200.toFixed(2);
+            document.getElementById('bullChange').textContent = bull200Change.toFixed(2);
+            
+            document.getElementById('bear100Price').textContent = currency + ' ' + bear100.toFixed(2);
+            document.getElementById('bear100Change').textContent = bear100Change.toFixed(2);
+            
+            document.getElementById('bull100Price').textContent = currency + ' ' + bull100.toFixed(2);
+            document.getElementById('bull100Change').textContent = bull100Change.toFixed(2);
+        }
+
+        // ===== EXPORT TO CSV =====
+        function exportToCSV() {
+            if (cashFlowData.length === 0) {
+                alert('No cash flow data to export. Please calculate first.');
+                return;
+            }
+            
+            const currency = document.getElementById('currency').value;
+            let csv = 'Period,Date,Coupon,Principal,Total Cash Flow,Discount Factor,Present Value\n';
+            
+            cashFlowData.forEach(cf => {
+                csv += `${cf.period},${cf.date},${cf.coupon.toFixed(2)},${cf.principal.toFixed(2)},${cf.totalCF.toFixed(2)},${cf.discountFactor.toFixed(6)},${cf.pv.toFixed(2)}\n`;
+            });
+            
+            // Create download link
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'bond_cashflows_' + new Date().toISOString().split('T')[0] + '.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+
+        // ===== TAB SWITCHING =====
+        function switchTab(tabName) {
+            // Hide all tab contents
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(tc => tc.classList.remove('active'));
+            
+            // Remove active class from all tabs
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(t => t.classList.remove('active'));
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+
+        // ===== RESET FORM =====
+        function reset() {
+            document.getElementById('faceValue').value = '1000';
+            document.getElementById('couponRate').value = '5';
+            document.getElementById('couponFrequency').value = '2';
+            document.getElementById('marketPrice').value = '100';
+            document.getElementById('ytm').value = '5';
+            document.getElementById('taxRate').value = '0';
+            document.getElementById('callPrice').value = '';
+            document.getElementById('settlementDate').value = '2025-10-03';
+            document.getElementById('maturityDate').value = '2035-10-03';
+            
+            document.getElementById('resultsContainer').classList.add('hidden');
+            document.getElementById('placeholder').classList.remove('hidden');
+            document.getElementById('analysisSection').style.display = 'none';
+            
+            cashFlowData = [];
+        }
+
+        // ===== INITIALIZE ON PAGE LOAD =====
+        window.addEventListener('DOMContentLoaded', function() {
+            // Set today's date as default settlement date
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('settlementDate').value = today;
+            
+            // Set maturity date 10 years from now
+            const futureDate = new Date();
+            futureDate.setFullYear(futureDate.getFullYear() + 10);
+            document.getElementById('maturityDate').value = futureDate.toISOString().split('T')[0];
+        });
+    </script>
+</body>
+</html>
